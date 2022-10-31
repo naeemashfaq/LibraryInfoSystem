@@ -1,0 +1,39 @@
+﻿@page "/libraryitem/checkin/{id:int}"
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject ILibraryItemService libService;
+@inject ICategoryService catService;
+@inject NavigationManager NavigationManager;
+
+<PageTitle>Checkout Library item</PageTitle>
+
+@if (Item == null)
+{
+    <p><em>Loading... !</em></p>
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+    public LibraryItem Item { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Item = await libService.GetLibraryItem(Id);
+        Item.BorrowDate = null;
+        Item.Borrower = null;
+        await libService.UpdateLibraryItem(Item, Id);
+        NavigationManager.NavigateTo("/");
+
+    }
+
+    private async void SubmitItem()
+    {
+        
+        var item1 = Item;
+        await libService.UpdateLibraryItem(Item, Id);
+        NavigationManager.NavigateTo("/");
+    }
+}
+

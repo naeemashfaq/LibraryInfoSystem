@@ -1,0 +1,75 @@
+﻿@page "/categorylist"
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject ICategoryService catService;
+@inject NavigationManager NavigationManager;
+<PageTitle>Category List</PageTitle>
+
+<div class="row">
+    <div class="col-lg-6">
+        <h1>Categories</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <a class="btn btn-success btn-sm" href="/category/create" role="button">Create New</a>
+    </div>
+</div>
+
+ 
+
+@if (customers is null)
+{
+    <p><em>Loading... !</em></p>
+}
+else
+{
+ <div class="col-9">
+<table class="table table-bordered">
+        <thead>
+          <tr>
+          <th scope="col">Id</th>
+            <th scope="col">Title</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        @foreach(var item in customers)
+        {
+        <tbody>
+          <tr>
+              <td>@item.Id</td>          
+              <td>@item.CategoryName</td>
+            <td>
+              <a href="/Category/edit/@item.Id" class="btn btn-primary" role="button">Edit</a>
+              <button type="button" class="btn btn-danger" @onclick="@(e => DeleteCategory(item.Id))" role="button">Delete</button>
+            </td>
+          </tr>
+          
+        </tbody>
+        }
+</table>
+</div>
+}
+
+@code{
+    private List<Category> customers = new List<Category>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetCategories();
+    }
+
+    private async Task GetCategories()
+    {
+        customers = await catService.GetCategories();
+
+    }
+
+    public async Task DeleteCategory(int id)
+    {
+        var status = await catService.DeleteCategory(id);
+        if(status == true)
+        {
+            customers.RemoveAll(x => x.Id == id);
+        }
+    }
+}

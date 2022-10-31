@@ -1,0 +1,48 @@
+﻿@page "/category/create"
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject ICategoryService catService;
+@inject NavigationManager NavigationManager;
+
+<div class="row">
+    <div class="col-lg-6">
+        <h1>Create New Category</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <a class="btn btn-secondary btn-sm" href="/categorylist" role="button">Go Back To List</a>
+    </div>
+</div>
+
+<EditForm Model="@Category" OnValidSubmit="SubmitCategory">
+    <DataAnnotationsValidator/>
+    <ValidationSummary />
+    <div class="col-6">
+            <label>Name</label>
+            <ValidationMessage For="@(() => Category.CategoryName)" />
+            <InputText class="form-control" @bind-Value="Category.CategoryName" />
+   </div>
+   <p></p>
+   <div class="form-group"><button type="submit" class="btn btn-primary">Create</button>    </div>
+    
+</EditForm>
+
+@code{
+    private Category Category { get; set; }
+    Category ReceivedReservation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Category = new Category();
+    }
+
+    private async void SubmitCategory()
+    {
+
+        var val = await catService.CreateCategory(Category);
+        //await PlayersService.CreatePlayer(Player);
+ 
+         NavigationManager.NavigateTo("/categorylist");
+    }
+}
+   
+

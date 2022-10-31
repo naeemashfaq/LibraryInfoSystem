@@ -1,0 +1,55 @@
+﻿@page "/libraryitem/checkout/{id:int}"
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject ILibraryItemService libService;
+@inject ICategoryService catService;
+@inject NavigationManager NavigationManager;
+
+<PageTitle>Checkout Library item</PageTitle>
+
+@if (Item == null)
+{
+    <p><em>Loading... !</em></p>
+}
+else
+{
+    <EditForm Model="@Item" OnValidSubmit="@SubmitItem">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+
+        <div class="col-6">
+            <label>Borrower</label>
+            <ValidationMessage For="@(() => Item.Borrower)" />
+            <InputText class="form-control" @bind-Value="Item.Borrower" />
+        </div>
+
+        <div class="col-6">
+            <label>Borrowed Date</label>
+            <ValidationMessage For="@(() => Item.BorrowDate)" />
+            <InputDate class="form-control" @bind-Value="Item.BorrowDate" />
+        </div>
+        <div class="col-6"><button type="submit" class="btn btn-primary">Checkout</button></div>
+
+    </EditForm>
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+    public LibraryItem Item { get; set; }
+
+    //Getting the item being checkout
+    protected override async Task OnInitializedAsync()
+    {
+        Item = await libService.GetLibraryItem(Id);
+
+    }
+    //updating the database by checkout the item
+    private async void SubmitItem()
+    {
+        await libService.UpdateLibraryItem(Item, Id);
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,121 @@
+﻿@page "/libraryitem/create"
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject ILibraryItemService libService;
+@inject ICategoryService catService;
+@inject NavigationManager NavigationManager;
+
+<div class="row">
+    <div class="col-lg-9">
+        <h1>Create New Library Item</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <a class="btn btn-secondary btn-sm" href="/" role="button">Go Back To Library Items Page</a>
+    </div>
+</div>
+
+<EditForm Model="@Item" OnValidSubmit="SubmitLibItem">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="col-6">
+        <label>Title</label>
+        <ValidationMessage For="@(() => Item.Title)" />
+        <InputText class="form-control" @bind-Value="Item.Title" />
+    </div>
+
+    <div class="col-6">
+        <label>Category Type</label>
+        <InputSelect @bind-Value="Item.CategoryId" class="form-control">
+            <option value="">Select Item Category</option>
+            @if (cat != null)
+            {
+                @foreach (var c in cat)
+                {
+                    <option value="@c.Id">@c.CategoryName</option>
+                }
+            }
+        </InputSelect>
+    </div>
+
+    <div class="col-6">
+        <label>Library Item Type</label>
+        <ValidationMessage For="@(() => Item.Type)" />
+        <InputSelect class="form-control" @bind-Value="Item.Type">
+            <option value="">Select Item Type ...</option>
+            <option value="book">Book</option>
+            <option value="referencebook">Reference Book</option>
+            <option value="dvd">Dvd</option>
+            <option value="audiobook">Audio Book</option>
+        </InputSelect>
+    </div>
+    @if (Item.Type == "referencebook")
+    {
+        Item.IsBorrowable = false;
+    }
+    else
+    {
+        Item.IsBorrowable = true;
+    }
+
+
+    @if (Item.Type == "book" || Item.Type == "referencebook")
+    {
+        <div class="col-6">
+            <label>Author</label>
+            <ValidationMessage For="@(() => Item.Author)" />
+            <InputText class="form-control" @bind-Value="Item.Author" />
+        </div>
+
+        <div class="col-6">
+            <label>No. of Pages</label>
+            <ValidationMessage For="@(() => Item.Pages)" />
+            <InputNumber class="form-control" @bind-Value="Item.Pages" />
+        </div>
+    }
+
+    @if (Item.Type == "dvd" || Item.Type == "audiobook")
+    {
+
+        <div class="col-6">
+            <label>Runtime Minutes</label>
+            <ValidationMessage For="@(() => Item.RunTimeMinutes)" />
+            <InputNumber class="form-control" @bind-Value="Item.RunTimeMinutes" />
+        </div>
+    }
+
+    <div class="row>"
+        <div class="col-6">
+            <label>Borrowable</label>
+            <ValidationMessage For="@(() => Item.IsBorrowable)" />
+            <InputCheckbox @bind-Value="Item.IsBorrowable" disabled/>
+   </div>
+   </div>
+
+    <div class="row>"
+   <div class="col-6"><button type="submit" class="btn btn-primary">Create</button></div>
+    </div>
+</EditForm>
+
+@code {
+    private LibraryItem Item { get; set; }
+    private List<Category> cat = new List<Category>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Item = new LibraryItem();
+        GetCategories();
+    }
+    // Getting list of categories
+    private async Task GetCategories()
+    {
+        cat = await catService.GetCategories();
+
+    }
+    // Adding a new library item to the database 
+    private async void SubmitLibItem()
+    {
+        await libService.CreateLibraryItem(Item);
+        NavigationManager.NavigateTo("/");
+    }
+}

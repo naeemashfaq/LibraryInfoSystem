@@ -1,0 +1,127 @@
+﻿@page "/employee/create"
+@using LibraryItems.Api.Dtos
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject IEmployeeService empService;
+@inject NavigationManager NavigationManager;
+
+<div class="row">
+    <div class="col-lg-9">
+        <h1>Create New Employee</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <a class="btn btn-secondary btn-sm" href="/employeelist" role="button">Go Back To Employees Page</a>
+    </div>
+</div>
+
+<EditForm Model="@Emp" OnValidSubmit="SubmitEmployee">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="col-6">
+        <label>First Name</label>
+        <ValidationMessage For="@(() => Emp.FirstName)" />
+        <InputText class="form-control" @bind-Value="Emp.FirstName" />
+    </div>
+
+    <div class="col-6">
+        <label>Last Name</label>
+        <ValidationMessage For="@(() => Emp.LastName)" />
+        <InputText class="form-control" @bind-Value="Emp.LastName" />
+    </div>
+
+     <div class="col-6">
+            <label>Salary Scale</label>
+            <ValidationMessage For="@(() => Emp.Salary)" />
+            <InputNumber class="form-control" @bind-Value="Emp.Salary" />
+        </div>
+
+        <div class="col-6">
+        <label>Employee Type</label>
+        <InputSelect class="form-control" @bind-Value="EmpStatus">
+            <option value="">Select Employee Type...</option>
+            <option value="ceo">CEO</option>
+            <option value="manager">Manager</option>
+            <option value="employee">Employee</option>
+        </InputSelect>
+    </div>
+    
+           
+        @if(EmpStatus == "manager" || EmpStatus == "employee")
+        {
+        <div class="col-6">
+        <label>Select Manager</label>
+        <InputSelect @bind-Value="Emp.ManagerId" class="form-control">
+            <option value="">Select Manager</option>
+            @if (EmpList != null)
+            {
+                @foreach (var e in EmpList)
+                {
+                    @if (e.Status == "Manager" && EmpStatus =="employee")
+                    {
+                        
+                        <option value="@e.Id">@e.FirstName</option>
+                    }
+                    else if ((e.Status == "Manager"  || e.Status=="CEO") && EmpStatus =="manager")
+                    {
+                        <option value="@e.Id">@e.FirstName</option>
+                    }
+                }
+            }
+        </InputSelect>
+    </div>
+    }
+    <p></p>
+           
+
+    <div class="row>"
+   <div class="col-6"><button type="submit" class="btn btn-primary">Create</button></div>
+    </div>
+</EditForm>
+
+@code {
+    private Employee Emp { get; set; }
+    private string EmpStatus { get; set; }
+    private List<EmployeeDto> EmpList { get; set; } = new List<EmployeeDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Emp = new Employee();
+        GetEmployees();
+    }
+    // Getting list of Employees
+    private async Task GetEmployees()
+    {
+        EmpList = await empService.GetEmployees();
+        var gg = EmpList;
+
+
+    }
+    // Adding a new library item to the database 
+    private async void SubmitEmployee()
+    {
+        var vv = Emp;
+        if(EmpStatus ==  "ceo")
+        {
+            Emp.IsCEO = true;
+            Emp.IsManager = false;
+            Emp.Salary =  Emp.Salary * 2.725f;
+        }
+        else if(EmpStatus == "manager")
+        {
+            Emp.IsCEO = false;
+            Emp.IsManager = true;
+            Emp.Salary =  Emp.Salary * 1.725f;
+        }
+        else
+        {
+            Emp.IsCEO = false;
+            Emp.IsManager = false;
+            Emp.Salary =  Emp.Salary * 1.125f;
+        }
+
+        vv = Emp;
+        await empService.CreateEmployee(Emp);
+        NavigationManager.NavigateTo("/employeelist");
+    }
+}

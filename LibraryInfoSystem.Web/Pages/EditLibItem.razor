@@ -1,0 +1,107 @@
+﻿@page "/libraryitem/edit/{id:int}"
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject ILibraryItemService libService;
+@inject ICategoryService catService;
+@inject NavigationManager NavigationManager;
+
+<PageTitle>Edit Library item</PageTitle>
+
+@if (Item != null)
+{
+    <div class="row">
+        <div class="col-lg-9">
+            <h1>@Item.Title</h1>
+        </div>
+        <div class="col-lg-3 text-right">
+            <a class="btn btn-secondary btn-sm" href="/" role="button">Go Back To List of Libray Items</a>
+        </div>
+    </div>
+
+    <EditForm Model="@Item" OnValidSubmit="@SubmitItem">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="col-6">
+            <label>Id</label>
+            <InputNumber disabled class="form-control" @bind-Value="Item.Id" />
+        </div>
+        <div class="col-6">
+            <label>Title</label>
+            <ValidationMessage For="@(() => Item.Title)" />
+            <InputText class="form-control" @bind-Value="Item.Title" />
+        </div>
+
+        <div class="col-6">
+            <label>Category Type</label>
+            <InputSelect @bind-Value="Item.CategoryId" class="form-control">
+                <option value="">Select Item Category</option>
+                @if (Cat != null)
+                {
+                @foreach (var c in Cat)
+                    {
+                    <option value="@c.Id">@c.CategoryName</option>
+                    }
+                }
+        </InputSelect>
+    </div>
+
+    <div class="col-6">
+        <label>Library Item Type</label>
+        <ValidationMessage For="@(() => Item.Type)" />
+        <InputSelect class="form-control" @bind-Value="Item.Type">
+            <option value="book">Book</option>
+            <option value="referencebook">Reference Book</option>
+            <option value="dvd">Dvd</option>
+            <option value="audiobook">Audio Book</option>
+        </InputSelect>
+    </div>
+
+    @if (Item.Type == "book" || Item.Type == "referencebook")
+        {
+            <div class="col-6">
+                <label>Author</label>
+                <ValidationMessage For="@(() => Item.Author)" />
+                <InputText class="form-control" @bind-Value="Item.Author" />
+            </div>
+
+            <div class="col-6">
+                <label>No. of Pages</label>
+                <ValidationMessage For="@(() => Item.Pages)" />
+                <InputNumber class="form-control" @bind-Value="Item.Pages" />
+            </div>
+        }
+
+        @if (Item.Type == "dvd" || Item.Type == "audiobook")
+        {
+
+            <div class="col-6">
+                <label>Runtime Minutes</label>
+                <ValidationMessage For="@(() => Item.RunTimeMinutes)" />
+                <InputNumber class="form-control" @bind-Value="Item.RunTimeMinutes" />
+            </div>
+        }
+        <p></p>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </EditForm>
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+    public LibraryItem Item { get; set; }
+    private List<Category> Cat = new List<Category>();
+    //Getting the library item to be edited
+    protected override async Task OnInitializedAsync()
+    {
+        Item = await libService.GetLibraryItem(Id);
+        Cat = await catService.GetCategories();
+    }
+    //Updating the library item in the database
+    private async void SubmitItem()
+    {
+        await libService.UpdateLibraryItem(Item, Id);
+        NavigationManager.NavigateTo("/");
+    }
+}

@@ -1,0 +1,99 @@
+﻿@page "/employeelist"
+@using LibraryItems.Api.Entities;
+@using LibraryItems.Api.Dtos;
+@using LibraryInfoSystem.Web.Services;
+@inject IEmployeeService empService;
+@inject NavigationManager NavigationManager;
+
+<PageTitle>Employees List</PageTitle>
+
+
+<div class="row">
+    <div class="col-lg-6">
+        <h1>Employees Information</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <a class="btn btn-success btn-sm" href="/employee/create" role="button">Create New</a>
+    </div>
+</div>
+
+<p></p>
+@if (Employees is null)
+{
+    <p><em>Loading... !</em></p>
+}
+else if (Employees.Count == 0)
+{
+    <p><em>No Record to Show !</em></p>
+}
+else
+{
+    
+    <p></p>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th scope="col">Id</th>
+                <th scope="col">First Name</th>
+                <th scope="col">Last Name</th>
+                <th scope="col">Salary</th>
+                <th scope="col">IsCEO</th>
+                <th scope="col">IsManager</th>
+                <th scope="col">Manager</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        @foreach (var item in Employees)
+        {
+            <tbody>
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.FirstName</td>
+                    <td>@item.LastName</td>
+                    <td>@item.Salary</td>
+                    <td>@item.IsCEO</td>
+                    <td>@item.IsManager</td>
+                    <td>@item.ManagerName</td>
+                    
+                    <td>
+                        <a href="/employee/edit/@item.Id" class="btn btn-primary" role="button">Edit</a>
+                        <button type="button" class="btn btn-danger" @onclick="@(e => DeleteEmployee(item.Id))" role="button">Delete</button>
+                       
+                    </td>
+                </tr>
+
+            </tbody>
+        }
+    </table>
+}
+
+@code {
+    private List<EmployeeDto> Employees { get; set; } = new List<EmployeeDto>();
+    private string UserSort { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetEmployee();
+    }
+
+    private async Task GetEmployee()
+    {
+        // Getting all library items from the database
+        Employees = await empService.GetEmployees();
+
+
+    }
+
+    // Delete an employee
+    public async Task DeleteEmployee(int id)
+    {
+        var status = await empService.DeleteEmployee(id);
+        if(status == true)
+        {
+            Employees.RemoveAll(x => x.Id == id);
+        }
+    }
+    
+   
+}

@@ -1,0 +1,137 @@
+﻿@page "/"
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject ILibraryItemService libService;
+<PageTitle>Library Item List</PageTitle>
+@inject NavigationManager NavigationManager;
+
+<div class="row">
+    <div class="col-lg-6">
+        <h1>Library Item Information</h1>
+    </div>
+    <div class="col-lg-3 text-right">
+        <a class="btn btn-success btn-sm" href="/libraryitem/create" role="button">Create New</a>
+    </div>
+</div>
+
+<p></p>
+@if (Items is null)
+{
+    <p><em>Loading... !</em></p>
+}
+else if (Items.Count == 0)
+{
+    <p><em>No Record to Show !</em></p>
+}
+else
+{
+    <EditForm Model="@UserSort">
+        <div class="col-3">
+            <InputSelect ValueExpression="@(()=>UserSort)"
+                     Value="@UserSort"
+                     ValueChanged="@((string value) => OnValueChanged(value ))">
+                <option value="">Change Sort Order...</option>
+                <option value="category">Category</option>
+                <option value="type">Type</option>ion>
+            </InputSelect>
+        </div>
+    </EditForm>
+    <p></p>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th scope="col">Id</th>
+                <th scope="col">Title</th>
+                <th scope="col">Author</th>
+                <th scope="col">Category</th>
+                <th scope="col">Type</th>
+                <th scope="col">Borrower</th>
+                <th scope="col">Borrow Date</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        @foreach (var item in Items)
+        {
+            <tbody>
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Title</td>
+                    <td>@item.Author</td>
+                    <td>@item.Category.CategoryName</td>
+                    <td>@item.Type</td>
+                    <td>@item.Borrower</td>
+                    <td>@item.BorrowDate</td>
+                    <td>
+                        <a href="/libraryitem/edit/@item.Id" class="btn btn-primary" role="button">Edit</a>
+                        <button type="button" class="btn btn-danger" @onclick="@(e => DeleteLibraryItem(item.Id))" role="button">Delete</button>
+                        @if (item.Type != "referencebook")
+                        {
+                            @if (item.BorrowDate == null)
+                            {
+                                <a href="/libraryitem/checkout/@item.Id" class="btn btn-info" role="button">CheckOut</a>
+                            }
+                            else
+                            {
+                                <a href="/libraryitem/checkin/@item.Id" class="btn btn-danger" role="button">Checkin</a>
+                            }
+                        }
+                    </td>
+                </tr>
+
+            </tbody>
+        }
+    </table>
+}
+
+@code {
+    private List<LibraryItem> Items { get; set; } = new List<LibraryItem>();
+    private string UserSort { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetLibItems();
+    }
+
+    private async Task GetLibItems()
+    {
+        // Getting all library items from the database
+        Items = await libService.GetLibraryItems();
+        string result = " (";
+        //Adding acronym to the title
+        for (int i = 0; i < Items.Count; i++)
+        {
+            string[] strSplit = Items[i].Title.Split();
+            foreach (string res in strSplit)
+            {
+                result += res.Substring(0, 1);
+            }
+
+            result += ")";
+            result = result.ToUpper();
+            Items[i].Title += result;
+            result = " (";
+        }
+
+    }
+
+    // Delete a library item
+    public async Task DeleteLibraryItem(int id)
+    {
+        await libService.DeleteLibraryItem(id);
+        Items.RemoveAll(x => x.Id == id);
+    }
+    // Sorting list based on category and type
+    private void OnValueChanged(string value)
+    {
+        if (value == "type")
+        {
+            Items = Items.OrderBy(x => x.Type).ToList();
+
+        }
+        else if (value == "category")
+        {
+            Items = Items.OrderBy(x => x.Category.CategoryName).ToList();
+        }
+    }
+}

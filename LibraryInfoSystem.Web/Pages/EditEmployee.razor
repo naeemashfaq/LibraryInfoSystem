@@ -1,0 +1,138 @@
+﻿@page "/employee/edit/{id:int}"
+@using LibraryItems.Api.Entities;
+@using LibraryItems.Api.Dtos;
+@using LibraryInfoSystem.Web.Services;
+@inject IEmployeeService empService;
+@inject NavigationManager NavigationManager;
+<PageTitle>Edit Employee</PageTitle>
+    <div class="row">
+        <div class="col-lg-9">
+            <h1>@Emp.FirstName</h1>
+        </div>
+        <div class="col-lg-3 text-right">
+            <a class="btn btn-secondary btn-sm" href="/employeelist" role="button">Go Back To List of Employees</a>
+        </div>
+    </div>
+
+<EditForm Model="@Emp" OnValidSubmit="@SubmitEmployee">
+        <DataAnnotationsValidator/>
+        <ValidationSummary />
+        <div class="col-6">
+            <label>First Name</label>
+            <ValidationMessage For="@(() => Emp.FirstName)" />
+            <InputText class="form-control" @bind-Value="Emp.FirstName" />
+        </div>
+
+        <div class="col-6">
+            <label>Last Name</label>
+            <ValidationMessage For="@(() => Emp.LastName)" />
+            <InputText class="form-control" @bind-Value="Emp.LastName" />
+        </div>
+
+        <div class="col-6">
+            <label>Salary Scale</label>
+            <ValidationMessage For="@(() => Emp.Salary)" />
+            <InputNumber class="form-control" @bind-Value="Emp.Salary" />
+        </div>
+
+       
+        @if(Emp.IsCEO == false)
+        {
+        <div class="col-6">
+        <label>Select manager</label>
+        <InputSelect @bind-Value="Emp.ManagerId" class="form-control">
+            <option value="">Select Manager</option>
+            @if (EmpList != null)
+            {
+                @foreach (var e in EmpList)
+                {
+                     @if (e.Status == "Manager" && (Emp.IsManager == false && Emp.IsCEO == false) )
+                    {
+                        string fName = e.FirstName + " " + e.LastName;
+                        <option value="@e.Id">@e.FirstName</option>
+                        }
+                        else if ((e.Status == "Manager"  || e.Status=="CEO") && Emp.IsManager==true)
+                        {
+                            if(e.FirstName == Emp.FirstName)
+                            {
+                                continue;
+                            }
+                        string fName = e.FirstName + " " + e.LastName;
+                        <option value="@e.Id">@fName</option>
+                    }
+                    
+                }
+            }
+        </InputSelect>
+    </div>
+    }
+    <p></p>
+
+        <p></p>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </EditForm>
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+    private Employee Emp { get; set; }
+    private string EmpStatus { get; set; }
+    private List<EmployeeDto> EmpList { get; set; } = new List<EmployeeDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Emp = new Employee();
+        await  GetEmployees();
+    }
+    private async Task GetEmployees()
+    {
+        Emp = await empService.GetEmployee(Id);
+        EmpList = await empService.GetEmployees();
+
+        // Emp = EmpList.FirstOrDefault(x => x.Id == Id);        // Emp = await empService.GetEmployee(Id);
+        //  Emp = EmpList.Find(x => x.Id == Id);
+        var abc=Emp;
+
+        //if (Emp != null)
+        //{
+        //    EmpOrg.Id = Emp.Id;
+        //    EmpOrg.FirstName = Emp.FirstName;
+        //    EmpOrg.LastName = Emp.LastName;
+        //    EmpOrg.Salary = Emp.Salary;
+        //    EmpOrg.IsCEO = Emp.IsCEO;
+        //    EmpOrg.IsManager = Emp.IsManager;
+        //    EmpOrg.ManagerId = Emp.ManagerId;
+        //}
+    }
+
+    private async void SubmitEmployee()
+    {
+        if(Emp.IsCEO == true)
+        {
+            Emp.IsCEO = true;
+            Emp.IsManager = false;
+            Emp.Salary =  Emp.Salary * 2.725f;
+        }
+        else if(Emp.IsManager==true)
+        {
+            Emp.IsCEO = false;
+            Emp.IsManager = true;
+            Emp.Salary =  Emp.Salary * 1.725f;
+        }
+        else
+        {
+            Emp.IsCEO = false;
+            Emp.IsManager = false;
+            Emp.Salary =  Emp.Salary * 1.125f;
+        }
+
+        var empp = Emp;
+        await empService.UpdateEmployee(Emp, Id);
+        NavigationManager.NavigateTo("/employeelist");
+    }
+ }
+
+
+
+

@@ -1,0 +1,56 @@
+﻿
+@page "/Category/edit/{id:int}"
+@using LibraryItems.Api.Entities;
+@using LibraryInfoSystem.Web.Services;
+@inject ICategoryService catService;
+@inject NavigationManager NavigationManager;
+
+<PageTitle>Edit Category</PageTitle>
+
+ 
+@if (Cat != null)
+{
+    <div class="row">
+        <div class="col-lg-9">
+            <h1>@Cat.CategoryName</h1>
+        </div>
+        <div class="col-lg-3 text-right">
+            <a class="btn btn-secondary btn-sm" href="/players" role="button">Go Back To List</a>
+        </div>
+    </div>
+ 
+    <EditForm Model="@Cat" OnValidSubmit="@SubmitPlayer">
+        <DataAnnotationsValidator/>
+        <ValidationSummary />
+        <div class="col-6">
+            <label>Name</label>
+            <ValidationMessage For="@(() => Cat.CategoryName)" />
+            <InputText class="form-control" @bind-Value="Cat.CategoryName" />
+        </div>
+        <p></p>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </EditForm>
+}
+
+@code{
+    [Parameter]
+    public int Id { get; set; }
+
+    public Category Cat { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cat = await catService.GetCategory(Id); 
+        
+
+    }
+
+    private async void SubmitPlayer()
+    {
+        await catService.UpdateCategory(Cat,Id); 
+        
+        
+        NavigationManager.NavigateTo("/categorylist");
+    }
+}
